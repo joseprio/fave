@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fave — SVG favicon maker</title>
+  <meta name="description" content="Make tiny, font-free SVG favicons from text. Runs entirely in your browser.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <h1>Fave</h1>
+    <p>Simple SVG favicon generator</p>
+  </header>
+
+  <main class="layout">
+    <section class="controls" aria-label="Settings">
+      <fieldset>
+        <legend>Text</legend>
+        <label class="stack">
+          <span>Text <small>(new line = new row; letters are upper-cased)</small></span>
+          <textarea data-key="text" rows="2" spellcheck="false"></textarea>
+        </label>
+        <p id="unsupported" class="warn" hidden></p>
+
+        <div class="stack">
+          <span>Style</span>
+          <div id="styles" class="styles" data-seg="style"></div>
+        </div>
+
+        <label data-show="style!=pixel">Weight <output></output><input type="range" data-key="weight" min="0.4" max="4" step="0.1"></label>
+        <label data-show="style=outline">Outline <output></output><input type="range" data-key="outline" min="0.3" max="2.5" step="0.1"></label>
+        <label>Letter gap <output></output><input type="range" data-key="letterSpacing" min="-1" max="6" step="0.1"></label>
+        <label>Line gap <output></output><input type="range" data-key="lineGap" min="-1" max="8" step="0.1"></label>
+        <label>Slant <output></output><input type="range" data-key="slant" min="-20" max="20" step="1"></label>
+        <label>Padding <output></output><input type="range" data-key="pad" min="0" max="12" step="0.5"></label>
+
+        <div class="row">
+          <span>Align</span>
+          <div class="seg" data-seg="align">
+            <button type="button" data-value="left">Left</button>
+            <button type="button" data-value="center">Center</button>
+            <button type="button" data-value="right">Right</button>
+          </div>
+        </div>
+        <div class="row" data-show="style=pixel">
+          <span>Pixel grid</span>
+          <div class="seg" data-seg="pixelGrid">
+            <button type="button" data-value="16">16px</button>
+            <button type="button" data-value="32">32px</button>
+            <button type="button" data-value="off">Off</button>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" data-key="stretch"> Stretch to fill the box</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Colours</legend>
+        <div class="color"><span>Text</span><input type="color" data-key="fg"><input type="text" data-key="fg" maxlength="7" aria-label="Text colour hex"></div>
+        <div class="color" data-show="shape!=none"><span>Background</span><input type="color" data-key="bg"><input type="text" data-key="bg" maxlength="7" aria-label="Background colour hex"></div>
+        <label class="check" data-show="shape!=none"><input type="checkbox" data-key="gradient"> Gradient</label>
+        <div class="color" data-show="gradient=true"><span>Second</span><input type="color" data-key="bg2"><input type="text" data-key="bg2" maxlength="7" aria-label="Second colour hex"></div>
+        <label data-show="gradient=true">Angle <output></output><input type="range" data-key="gradAngle" min="0" max="360" step="5"></label>
+        <button type="button" id="shuffle" class="ghost">Shuffle colours</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>Background</legend>
+        <div class="seg" data-seg="shape">
+          <button type="button" data-value="none">None</button>
+          <button type="button" data-value="square">Square</button>
+          <button type="button" data-value="rounded">Rounded</button>
+          <button type="button" data-value="circle">Circle</button>
+        </div>
+        <label data-show="shape=rounded">Corner radius <output></output><input type="range" data-key="radius" min="0" max="16" step="0.5"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Shadow</legend>
+        <div class="seg" data-seg="shadow">
+          <button type="button" data-value="none">None</button>
+          <button type="button" data-value="soft">Soft</button>
+          <button type="button" data-value="hard">Hard</button>
+          <button type="button" data-value="long">Long</button>
+        </div>
+        <div data-show="shadow!=none" class="stack">
+          <div class="color"><span>Colour</span><input type="color" data-key="shColor"><input type="text" data-key="shColor" maxlength="7" aria-label="Shadow colour hex"></div>
+          <label>Opacity <output></output><input type="range" data-key="shOpacity" min="0.05" max="1" step="0.05"></label>
+          <label>Offset X <output></output><input type="range" data-key="shX" min="-4" max="4" step="0.25"></label>
+          <label>Offset Y <output></output><input type="range" data-key="shY" min="-4" max="4" step="0.25"></label>
+          <label data-show="shadow=soft">Blur <output></output><input type="range" data-key="shBlur" min="0" max="3" step="0.1"></label>
+          <label data-show="shadow=long">Length <output></output><input type="range" data-key="shLength" min="2" max="40" step="1"></label>
+        </div>
+      </fieldset>
+
+      <button type="button" id="reset" class="ghost">Reset everything</button>
+    </section>
+
+    <section class="output" aria-label="Preview and export">
+      <div class="hero">
+        <div id="big" class="checker big"></div>
+        <div class="hero-side">
+          <div class="tabs light">
+            <div class="tab"><img data-live alt="" width="16" height="16"><span>My site</span></div>
+            <div class="tab dim"><span class="dot"></span><span>Inbox</span></div>
+          </div>
+          <div class="tabs dark">
+            <div class="tab"><img data-live alt="" width="16" height="16"><span>My site</span></div>
+            <div class="tab dim"><span class="dot"></span><span>Inbox</span></div>
+          </div>
+          <div class="zoom">
+            <figure><canvas data-raster="16" width="16" height="16"></canvas><figcaption>16px, actual pixels</figcaption></figure>
+            <figure><canvas data-raster="32" width="32" height="32"></canvas><figcaption>32px, actual pixels</figcaption></figure>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Sizes</h2>
+          <div class="seg small" id="preview-bg">
+            <button type="button" data-bg="light" aria-pressed="true">Light</button>
+            <button type="button" data-bg="dark" aria-pressed="false">Dark</button>
+            <button type="button" data-bg="checker" aria-pressed="false">Transparent</button>
+          </div>
+        </div>
+        <div id="sizes" class="sizes" data-bg="light">
+          <figure><img data-live alt="" width="16" height="16"><figcaption>16</figcaption></figure>
+          <figure><img data-live alt="" width="24" height="24"><figcaption>24</figcaption></figure>
+          <figure><img data-live alt="" width="32" height="32"><figcaption>32</figcaption></figure>
+          <figure><img data-live alt="" width="48" height="48"><figcaption>48</figcaption></figure>
+          <figure><img data-live alt="" width="64" height="64"><figcaption>64</figcaption></figure>
+          <figure><img data-live alt="" width="96" height="96"><figcaption>96</figcaption></figure>
+          <figure><img data-live alt="" width="128" height="128"><figcaption>128</figcaption></figure>
+          <figure><img data-live alt="" width="180" height="180"><figcaption>180</figcaption></figure>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Export</h2>
+          <span class="meta"><span id="bytes"></span> <span id="stroke-info"></span></span>
+        </div>
+        <div class="downloads">
+          <button type="button" id="dl-svg" class="primary">icon.svg</button>
+          <button type="button" id="dl-ico">favicon.ico</button>
+          <button type="button" id="dl-apple">apple-touch-icon.png</button>
+          <button type="button" id="dl-192">icon-192.png</button>
+          <button type="button" id="dl-512">icon-512.png</button>
+          <button type="button" id="dl-manifest">manifest.webmanifest</button>
+        </div>
+        <div class="code-head"><h3>SVG</h3><span class="actions"><button type="button" id="copy-dataurl" class="ghost small">Copy as data URL</button><button type="button" id="copy-svg" class="ghost small">Copy</button></span></div>
+        <pre><code id="code"></code></pre>
+        <div class="code-head"><h3>HTML</h3><button type="button" id="copy-html" class="ghost small">Copy</button></div>
+<pre><code id="html-snippet">&lt;link rel="icon" href="/favicon.ico" sizes="32x32"&gt;
+&lt;link rel="icon" href="/icon.svg" type="image/svg+xml"&gt;
+&lt;link rel="apple-touch-icon" href="/apple-touch-icon.png"&gt;
+&lt;link rel="manifest" href="/manifest.webmanifest"&gt;</code></pre>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Font: <span id="specimen-name"></span></h2></div>
+        <div id="specimen" class="specimen"></div>
+        <p class="note">Glyphs are hand-drawn centre-lines converted to plain path data, so icons look identical everywhere and need no font files.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
