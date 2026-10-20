@@ -59,8 +59,11 @@
       <fieldset>
         <legend>Colours</legend>
         <div class="color"><span>Text</span><input type="color" data-key="fg"><input type="text" data-key="fg" maxlength="7" aria-label="Text colour hex"></div>
+        <label class="check"><input type="checkbox" data-key="fgGradient"> Text gradient</label>
+        <div class="color" data-show="fgGradient=true"><span>Second</span><input type="color" data-key="fg2"><input type="text" data-key="fg2" maxlength="7" aria-label="Second text colour hex"></div>
+        <label data-show="fgGradient=true">Angle <output></output><input type="range" data-key="fgAngle" min="0" max="360" step="5"></label>
         <div class="color" data-show="shape!=none"><span>Background</span><input type="color" data-key="bg"><input type="text" data-key="bg" maxlength="7" aria-label="Background colour hex"></div>
-        <label class="check" data-show="shape!=none"><input type="checkbox" data-key="gradient"> Gradient</label>
+        <label class="check" data-show="shape!=none"><input type="checkbox" data-key="gradient"> Background gradient</label>
         <div class="color" data-show="gradient=true"><span>Second</span><input type="color" data-key="bg2"><input type="text" data-key="bg2" maxlength="7" aria-label="Second colour hex"></div>
         <label data-show="gradient=true">Angle <output></output><input type="range" data-key="gradAngle" min="0" max="360" step="5"></label>
         <button type="button" id="shuffle" class="ghost">Shuffle colours</button>

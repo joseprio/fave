@@ -21,6 +21,9 @@ const DEFAULTS: Options = {
   bg2: '#d93f8e',
   gradAngle: 135,
   fg: '#ffffff',
+  fgGradient: false,
+  fg2: '#ffd36e',
+  fgAngle: 180,
   shadow: 'none',
   shColor: '#000000',
   shOpacity: 0.35,
@@ -97,6 +100,7 @@ function bindAll() {
     state.bg = hslHex(h, 0.65, 0.5);
     state.bg2 = hslHex((h + 40 + Math.random() * 60) % 360, 0.7, 0.55);
     state.fg = Math.random() < 0.8 ? '#ffffff' : hslHex((h + 180) % 360, 0.9, 0.85);
+    state.fg2 = hslHex((h + 160 + Math.random() * 60) % 360, 0.9, 0.75);
     update();
   });
   $('#reset').addEventListener('click', () => { state = { ...DEFAULTS }; update(); });
@@ -186,7 +190,7 @@ function renderStyleButtons() {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset.value = id;
-    const { svg } = render({ ...state, text: 'Ag5', style: id, shape: 'none', shadow: 'none', pad: 1, fg: 'currentColor', w: 48, h: 24, idPrefix: `s-${id}-`, stretch: false, pixelGrid: 'off' });
+    const { svg } = render({ ...state, text: 'Ag5', style: id, shape: 'none', shadow: 'none', pad: 1, fg: 'currentColor', fgGradient: false, w: 48, h: 24, idPrefix: `s-${id}-`, stretch: false, pixelGrid: 'off' });
     b.innerHTML = `${svg}<span>${STYLES[id].name}</span>`;
     box.append(b);
   });
@@ -201,7 +205,7 @@ function renderSpecimen() {
   const font = state.style === 'pixel' ? PIXEL : STROKE;
   const text = ['ABCDEFGHIJKLM', 'NOPQRSTUVWXYZ', '0123456789', "!?.,:'-+=*#/()&@"]
     .map(l => [...l].filter(c => font[c]).join('')).join('\n');
-  const { svg } = render({ ...state, text, shape: 'none', shadow: 'none', pad: 2, fg: 'currentColor', w: 360, h: 140, idPrefix: 'spec-', stretch: false, pixelGrid: 'off', align: 'left', letterSpacing: Math.max(state.letterSpacing, 1.6), lineGap: 4 });
+  const { svg } = render({ ...state, text, shape: 'none', shadow: 'none', pad: 2, fg: 'currentColor', fgGradient: false, w: 360, h: 140, idPrefix: 'spec-', stretch: false, pixelGrid: 'off', align: 'left', letterSpacing: Math.max(state.letterSpacing, 1.6), lineGap: 4 });
   $('#specimen').innerHTML = svg;
   $('#specimen-name').textContent = STYLES[state.style].name;
 }

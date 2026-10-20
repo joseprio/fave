@@ -13,8 +13,8 @@ every glyph to plain path data:
 | Style   | How it's drawn                                                     |
 |---------|--------------------------------------------------------------------|
 | Round   | centre-line strokes, round caps/joins (like hand-made icons)       |
-| Sharp   | same skeleton, square caps, mitred joins                           |
-| Octo    | arcs replaced by 45° chamfers (tangent polygon), square caps       |
+| Sharp   | same skeleton, square-cut ends (flat on cap line / baseline), mitred joins |
+| Octo    | arcs replaced by 45° chamfers (tangent polygon), cut like Sharp    |
 | Outline | stroke masked by a thinner stroke → hollow letters                 |
 | Pixel   | 5×7 bitmap font, traced to one outline; can snap to a 16/32px grid |
 
