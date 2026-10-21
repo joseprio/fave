@@ -1,0 +1,45 @@
+/*
+ * A hand-picked set of Material Symbols (Google, Apache 2.0), bundled in
+ * docs/icons.json by scripts/icons.mjs and loaded the first time icon mode opens.
+ */
+
+export type IconStyle = 'outlined' | 'rounded' | 'sharp';
+
+/** order of the path variants in IconEntry.d: each style unfilled, then filled */
+const STYLES: IconStyle[] = ['outlined', 'rounded', 'sharp'];
+
+export interface IconEntry {
+  name: string;
+  /** space-separated search tags */
+  tags: string;
+  /** path data in a 0 -960 960 960 viewBox */
+  d: string[];
+}
+
+let icons: Promise<IconEntry[]> | null = null;
+
+export function loadIcons(): Promise<IconEntry[]> {
+  icons ??= fetch('icons.json').then(async r => {
+    if (!r.ok) throw new Error(`${r.status} for icons.json`);
+    return (await r.json()).icons;
+  });
+  icons.catch(() => (icons = null));
+  return icons;
+}
+
+export function iconPath(e: IconEntry, style: IconStyle, fill: boolean): string {
+  return e.d[STYLES.indexOf(style) * 2 + (fill ? 1 : 0)];
+}
+
+/** Icons matching every word of the query; matches on the name come first. */
+export function search(list: IconEntry[], query: string): IconEntry[] {
+  const q = query.toLowerCase().trim().split(/[\s_-]+/).filter(Boolean);
+  if (!q.length) return list;
+  const byName: IconEntry[] = [], byTag: IconEntry[] = [];
+  for (const e of list) {
+    const name = e.name.split('_'), tags = e.tags.split(' ');
+    if (q.every(w => name.some(x => x.startsWith(w)))) byName.push(e);
+    else if (q.every(w => name.some(x => x.startsWith(w)) || tags.some(x => x.startsWith(w)))) byTag.push(e);
+  }
+  return [...byName, ...byTag];
+}

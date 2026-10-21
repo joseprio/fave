@@ -1,8 +1,10 @@
 import { render, STYLES, type Options, type StyleId } from './engine.js';
 import { STROKE, PIXEL } from './fonts.js';
 import { rasterize, canvasToPng, buildIco, svgDataUrl } from './raster.js';
+import { iconPath, loadIcons, search, type IconEntry } from './icons.js';
 
 const DEFAULTS: Options = {
+  mode: 'text',
   text: 'F',
   style: 'round',
   weight: 1.8,
@@ -14,6 +16,9 @@ const DEFAULTS: Options = {
   pad: 6,
   outline: 0.9,
   pixelGrid: '16',
+  icon: 'bolt',
+  iconStyle: 'rounded',
+  iconFill: true,
   shape: 'rounded',
   radius: 8,
   bg: '#5b3fd9',
@@ -95,6 +100,18 @@ function bindAll() {
     });
   });
 
+  let searchTimer = 0;
+  $('#icon-search').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { gridKey = ''; renderIconGrid(); }, 120);
+  });
+  $('#icon-grid').addEventListener('click', e => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-icon]');
+    if (!b) return;
+    state.icon = b.dataset.icon!;
+    update();
+  });
+
   $('#shuffle').addEventListener('click', () => {
     const h = Math.floor(Math.random() * 360);
     state.bg = hslHex(h, 0.65, 0.5);
@@ -144,7 +161,8 @@ let rasterToken = 0;
 
 function update() {
   syncControls();
-  const res = render(state);
+  if (state.mode === 'icon') renderIconGrid();
+  const res = render({ ...state, iconPath: currentIconPath() });
   lastSvg = res.svg;
   const url = svgDataUrl(res.svg);
 
@@ -190,11 +208,52 @@ function renderStyleButtons() {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset.value = id;
-    const { svg } = render({ ...state, text: 'Ag5', style: id, shape: 'none', shadow: 'none', pad: 1, fg: 'currentColor', fgGradient: false, w: 48, h: 24, idPrefix: `s-${id}-`, stretch: false, pixelGrid: 'off' });
+    const { svg } = render({ ...state, mode: 'text', text: 'Ag5', style: id, shape: 'none', shadow: 'none', pad: 1, fg: 'currentColor', fgGradient: false, w: 48, h: 24, idPrefix: `s-${id}-`, stretch: false, pixelGrid: 'off' });
     b.innerHTML = `${svg}<span>${STYLES[id].name}</span>`;
     box.append(b);
   });
   syncControls();
+}
+
+/** the bundled icons, once icon mode has loaded them */
+let icons: IconEntry[] | null = null;
+let gridKey = '';
+
+function currentIconPath(): string {
+  if (!icons) return '';
+  // unknown names (old links) fall back to the default icon
+  const e = icons.find(e => e.name === state.icon) ?? icons.find(e => e.name === DEFAULTS.icon)!;
+  return iconPath(e, state.iconStyle, state.iconFill);
+}
+
+function renderIconGrid() {
+  const grid = $('#icon-grid');
+  if (!icons) {
+    if (gridKey === 'loading') return;
+    gridKey = 'loading';
+    grid.innerHTML = '<p class="empty">Loading icons…</p>';
+    loadIcons().then(list => { icons = list; gridKey = ''; update(); }, err => {
+      gridKey = '';
+      grid.innerHTML = `<p class="empty">Couldn't load the icons (${err.message}).</p>`;
+    });
+    return;
+  }
+  const q = $<HTMLInputElement>('#icon-search').value;
+  const key = JSON.stringify([q, state.iconStyle, state.iconFill]);
+  if (key !== gridKey) {
+    gridKey = key;
+    const found = search(icons, q);
+    grid.innerHTML = found.length ? '' : '<p class="empty">No icons found.</p>';
+    for (const e of found) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.icon = e.name;
+      b.title = e.name.replace(/_/g, ' ');
+      b.innerHTML = `<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="${iconPath(e, state.iconStyle, state.iconFill)}"/></svg>`;
+      grid.append(b);
+    }
+  }
+  grid.querySelectorAll<HTMLButtonElement>('button[data-icon]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.icon === state.icon)));
 }
 
 let specimenKey = '';
@@ -205,14 +264,14 @@ function renderSpecimen() {
   const font = state.style === 'pixel' ? PIXEL : STROKE;
   const text = ['ABCDEFGHIJKLM', 'NOPQRSTUVWXYZ', '0123456789', "!?.,:'-+=*#/()&@"]
     .map(l => [...l].filter(c => font[c]).join('')).join('\n');
-  const { svg } = render({ ...state, text, shape: 'none', shadow: 'none', pad: 2, fg: 'currentColor', fgGradient: false, w: 360, h: 140, idPrefix: 'spec-', stretch: false, pixelGrid: 'off', align: 'left', letterSpacing: Math.max(state.letterSpacing, 1.6), lineGap: 4 });
+  const { svg } = render({ ...state, mode: 'text', text, shape: 'none', shadow: 'none', pad: 2, fg: 'currentColor', fgGradient: false, w: 360, h: 140, idPrefix: 'spec-', stretch: false, pixelGrid: 'off', align: 'left', letterSpacing: Math.max(state.letterSpacing, 1.6), lineGap: 4 });
   $('#specimen').innerHTML = svg;
   $('#specimen-name').textContent = STYLES[state.style].name;
 }
 
 function appleSvg(): string {
   // iOS adds its own rounded corners and dislikes transparency: use a full square.
-  return render({ ...state, shape: 'square' }).svg;
+  return render({ ...state, iconPath: currentIconPath(), shape: 'square' }).svg;
 }
 
 async function png(svg: string, size: number) {

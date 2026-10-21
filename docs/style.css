@@ -100,6 +100,38 @@ textarea:focus, input[type=text]:focus { outline: 2px solid var(--accent); outli
 .warn { margin: 0; color: var(--warn); font-size: 12px; }
 .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
+.group { display: flex; flex-direction: column; gap: 10px; }
+input[type=search] {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+input[type=search]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 4px;
+  max-height: 232px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.icon-grid button {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: pointer;
+  padding: 0;
+}
+.icon-grid button:hover { border-color: var(--line); }
+.icon-grid button[aria-pressed=true] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.icon-grid svg { width: 24px; height: 24px; fill: var(--text); }
+.icon-grid .empty { grid-column: 1 / -1; color: var(--muted); font-size: 12px; margin: 4px; }
+
 .seg { display: flex; background: var(--chip); border-radius: 8px; padding: 3px; gap: 2px; }
 .seg button {
   flex: 1;

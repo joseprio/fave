@@ -1,5 +1,5 @@
 /*
- * Favicon engine: turns text + options into a self-contained SVG string.
+ * Favicon engine: turns text or an icon + options into a self-contained SVG string.
  * Text is converted to path data, so the output never depends on fonts.
  */
 import { STROKE, PIXEL } from './fonts.js';
@@ -143,6 +143,121 @@ function glyphCmds(d, octo) {
         if (s.closed)
             out.push({ t: 'Z' });
     }
+    return out;
+}
+// ---------------------------------------------------------------- icon paths
+const NUM = /[-+]?(?:\d*\.\d+|\d+\.?)(?:e[-+]?\d+)?/iy;
+/**
+ * Any SVG path -> absolute M/L/C/Z commands. Sub-paths that draw nothing
+ * are dropped (Material Symbols end with a stray "m480-480Z" that would
+ * otherwise count towards the bounds).
+ */
+export function parsePath(d) {
+    let i = 0;
+    const skip = () => { while (i < d.length && /[\s,]/.test(d[i]))
+        i++; };
+    const more = () => { skip(); return i < d.length && /[-+.\d]/.test(d[i]); };
+    const num = () => {
+        skip();
+        NUM.lastIndex = i;
+        const m = NUM.exec(d);
+        if (!m)
+            throw new Error(`bad path data at ${i}`);
+        i += m[0].length;
+        return parseFloat(m[0]);
+    };
+    // arc flags may be written without separators: "a5 5 0 0110 10"
+    const flag = () => { skip(); return d[i++] === '1' ? 1 : 0; };
+    const subs = [];
+    let cur = [];
+    let x = 0, y = 0, sx = 0, sy = 0, ctrl = [0, 0], prev = '';
+    try {
+        for (skip(); i < d.length; skip()) {
+            const cmd = /[a-z]/i.test(d[i]) ? d[i++] : '';
+            if (!cmd)
+                break;
+            const C = cmd.toUpperCase(), rel = cmd !== C;
+            let first = true;
+            do {
+                const ox = rel ? x : 0, oy = rel ? y : 0;
+                const pt = () => [ox + num(), oy + num()];
+                const reflect = (kinds) => prev && kinds.includes(prev) ? [2 * x - ctrl[0], 2 * y - ctrl[1]] : [x, y];
+                let p;
+                switch (C) {
+                    case 'M':
+                        // further pairs after M are line-tos
+                        p = pt();
+                        if (!first)
+                            cur.push({ t: 'L', p });
+                        else {
+                            subs.push(cur = [{ t: 'M', p }]);
+                            [sx, sy] = p;
+                        }
+                        break;
+                    case 'L':
+                        p = pt();
+                        cur.push({ t: 'L', p });
+                        break;
+                    case 'H':
+                        p = [ox + num(), y];
+                        cur.push({ t: 'L', p });
+                        break;
+                    case 'V':
+                        p = [x, oy + num()];
+                        cur.push({ t: 'L', p });
+                        break;
+                    case 'C':
+                    case 'S': {
+                        const c1 = C === 'C' ? pt() : reflect('CS'), c2 = pt();
+                        p = pt();
+                        cur.push({ t: 'C', c1, c2, p });
+                        ctrl = c2;
+                        break;
+                    }
+                    case 'Q':
+                    case 'T': {
+                        const q = C === 'Q' ? pt() : reflect('QT');
+                        p = pt();
+                        cur.push({ t: 'C', c1: [x + (2 / 3) * (q[0] - x), y + (2 / 3) * (q[1] - y)], c2: [p[0] + (2 / 3) * (q[0] - p[0]), p[1] + (2 / 3) * (q[1] - p[1])], p });
+                        ctrl = q;
+                        break;
+                    }
+                    case 'A': {
+                        const rx = num(), ry = num(), rot = num(), fa = flag(), fs = flag();
+                        p = pt();
+                        cur.push(...arcCubics([x, y], rx, ry, rot, fa, fs, p));
+                        break;
+                    }
+                    case 'Z':
+                        cur.push({ t: 'Z' });
+                        p = [sx, sy];
+                        break;
+                    default:
+                        throw new Error(`unknown path command ${cmd}`);
+                }
+                [x, y] = p;
+                prev = C;
+                first = false;
+            } while (C !== 'Z' && more());
+        }
+    }
+    catch {
+        // render whatever parsed, like browsers do
+    }
+    return subs.filter(s => s.some(c => c.t === 'L' || c.t === 'C')).flat();
+}
+/** Endpoint arc (any rotation) -> cubics, via the ellipse's own frame. */
+function arcCubics(p0, rx, ry, rot, fa, fs, p) {
+    if (p0[0] === p[0] && p0[1] === p[1])
+        return [];
+    if (!rx || !ry)
+        return [{ t: 'L', p }];
+    const a = (rot * Math.PI) / 180, cos = Math.cos(a), sin = Math.sin(a);
+    const inv = ([px, py]) => [px * cos + py * sin, py * cos - px * sin];
+    const fwd = ([px, py]) => [px * cos - py * sin, px * sin + py * cos];
+    const [a0, a1] = [inv(p0), inv(p)];
+    const out = mapCmds(arcToCubics(arcSeg(a0[0], a0[1], rx, ry, fa, fs, a1[0], a1[1])), fwd);
+    out[out.length - 1].p = p;
     return out;
 }
 const infos = new Map();
@@ -384,6 +499,9 @@ function layoutPixel(o, lines) {
     }
     return { cmds, weight: 0, unsupported: [...unsupported] };
 }
+function layoutIcon(o) {
+    return { cmds: parsePath(o.iconPath ?? ''), weight: 0, unsupported: [] };
+}
 /**
  * Outline of the union of grid cells, as closed loops (outer edges clockwise,
  * holes counter-clockwise). One outline instead of many squares avoids the
@@ -477,9 +595,11 @@ function bezierPoint(p0, p1, p2, p3, t) {
 // ---------------------------------------------------------------- render
 export function render(o) {
     const W = o.w ?? 32, H = o.h ?? 32, P = o.idPrefix ?? '';
-    const st = STYLES[o.style];
+    const icon = o.mode === 'icon';
+    // icons are filled shapes, drawn like pixel text
+    const st = icon ? STYLES.pixel : STYLES[o.style];
     const lines = normalise(o.text);
-    const L = st.pixel ? layoutPixel(o, lines) : layoutStroke(o, st, lines);
+    const L = icon ? layoutIcon(o) : st.pixel ? layoutPixel(o, lines) : layoutStroke(o, st, lines);
     // Points of the geometry, for bounds.
     const pts = [];
     let prev = [0, 0];
@@ -550,7 +670,7 @@ export function render(o) {
     sx = Math.max(0, sx);
     sy = Math.max(0, sy);
     let snap = 0;
-    if (st.pixel && o.pixelGrid !== 'off') {
+    if (st.pixel && !icon && o.pixelGrid !== 'off') {
         // integer cell sizes keep pixel text crisp at the chosen size
         for (const g of o.pixelGrid === '16' ? [W / 16, W / 32] : [W / 32]) {
             if (Math.floor(sx / g) >= 1 && Math.floor(sy / g) >= 1) {

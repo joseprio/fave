@@ -1,0 +1,24 @@
+# Material Symbols bundled with Fave (picked to read well at 16px), one per line.
+# Rebuild docs/icons.json with: node scripts/icons.mjs
+home search settings menu star favorite bolt check_circle check close add info help warning
+lock key visibility notifications bookmark flag keep sell verified shield
+mail chat chat_bubble forum call send campaign rss_feed share link alternate_email tag
+person group face mood pets waving_hand thumb_up handshake
+play_arrow play_circle music_note headphones mic videocam movie photo_camera image palette brush edit draw
+stars graphic_eq radio podcasts
+code terminal data_object bug_report memory dns storage cloud database api hub wifi mobile computer
+keyboard mouse sports_esports smart_toy rocket_launch rocket science biotech experiment psychology extension
+token deployed_code webhook qr_code power electric_bolt
+shopping_cart shopping_bag storefront payments credit_card attach_money euro currency_bitcoin savings
+account_balance receipt_long redeem diamond workspace_premium trophy military_tech crown
+work description article menu_book book auto_stories school calendar_month schedule alarm timer hourglass_empty
+task_alt checklist folder inventory_2 bar_chart trending_up pie_chart monitoring lightbulb edit_note newspaper
+public language travel_explore map location_on explore near_me flight directions_car directions_bike train sailing anchor
+restaurant local_cafe coffee local_bar local_pizza cake icecream bakery_dining lunch_dining ramen_dining nightlife
+local_florist park forest eco spa grass water_drop local_fire_department whatshot sunny light_mode dark_mode bedtime
+ac_unit thunderstorm waves landscape mountain_flag volcano beach_access umbrella rainy
+fitness_center sports_soccer sports_basketball sports_tennis directions_run self_improvement hiking pool skateboarding
+medical_services health_and_safety vaccines medication monitor_heart ecg_heart
+chair bed construction build handyman cleaning_services local_shipping recycling sync download upload all_inclusive
+change_history circle square hexagon pentagon interests category widgets apps grid_view dashboard layers view_in_ar
+filter_vintage cruelty_free flutter_dash skull raven owl genetics planet nest_eco_leaf cookie diversity_3

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fave — SVG favicon maker</title>
-  <meta name="description" content="Make tiny, font-free SVG favicons from text. Runs entirely in your browser.">
+  <meta name="description" content="Make tiny, font-free SVG favicons from text or Material Symbols. Runs entirely in your browser.">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
   <script type="module" src="js/app.js"></script>
@@ -18,7 +18,25 @@
   <main class="layout">
     <section class="controls" aria-label="Settings">
       <fieldset>
-        <legend>Text</legend>
+        <legend>Content</legend>
+        <div class="seg" data-seg="mode">
+          <button type="button" data-value="text">Text</button>
+          <button type="button" data-value="icon">Icon</button>
+        </div>
+
+        <div class="group" data-show="mode=icon">
+          <input type="search" id="icon-search" placeholder="Search icons" aria-label="Search icons" spellcheck="false" autocomplete="off">
+          <div id="icon-grid" class="icon-grid"></div>
+          <div class="seg" data-seg="iconStyle">
+            <button type="button" data-value="outlined">Outlined</button>
+            <button type="button" data-value="rounded">Rounded</button>
+            <button type="button" data-value="sharp">Sharp</button>
+          </div>
+          <label class="check"><input type="checkbox" data-key="iconFill"> Filled</label>
+          <p class="note">A selection of Material Symbols by Google (Apache 2.0).</p>
+        </div>
+
+        <div class="group" data-show="mode=text">
         <label class="stack">
           <span>Text <small>(new line = new row; letters are upper-cased)</small></span>
           <textarea data-key="text" rows="2" spellcheck="false"></textarea>
@@ -35,7 +53,6 @@
         <label>Letter gap <output></output><input type="range" data-key="letterSpacing" min="-1" max="6" step="0.1"></label>
         <label>Line gap <output></output><input type="range" data-key="lineGap" min="-1" max="8" step="0.1"></label>
         <label>Slant <output></output><input type="range" data-key="slant" min="-20" max="20" step="1"></label>
-        <label>Padding <output></output><input type="range" data-key="pad" min="0" max="12" step="0.5"></label>
 
         <div class="row">
           <span>Align</span>
@@ -53,14 +70,17 @@
             <button type="button" data-value="off">Off</button>
           </div>
         </div>
+        </div>
+
+        <label>Padding <output></output><input type="range" data-key="pad" min="0" max="12" step="0.5"></label>
         <label class="check"><input type="checkbox" data-key="stretch"> Stretch to fill the box</label>
       </fieldset>
 
       <fieldset>
         <legend>Colours</legend>
-        <div class="color"><span>Text</span><input type="color" data-key="fg"><input type="text" data-key="fg" maxlength="7" aria-label="Text colour hex"></div>
-        <label class="check"><input type="checkbox" data-key="fgGradient"> Text gradient</label>
-        <div class="color" data-show="fgGradient=true"><span>Second</span><input type="color" data-key="fg2"><input type="text" data-key="fg2" maxlength="7" aria-label="Second text colour hex"></div>
+        <div class="color"><span>Foreground</span><input type="color" data-key="fg"><input type="text" data-key="fg" maxlength="7" aria-label="Foreground colour hex"></div>
+        <label class="check"><input type="checkbox" data-key="fgGradient"> Foreground gradient</label>
+        <div class="color" data-show="fgGradient=true"><span>Second</span><input type="color" data-key="fg2"><input type="text" data-key="fg2" maxlength="7" aria-label="Second foreground colour hex"></div>
         <label data-show="fgGradient=true">Angle <output></output><input type="range" data-key="fgAngle" min="0" max="360" step="5"></label>
         <div class="color" data-show="shape!=none"><span>Background</span><input type="color" data-key="bg"><input type="text" data-key="bg" maxlength="7" aria-label="Background colour hex"></div>
         <label class="check" data-show="shape!=none"><input type="checkbox" data-key="gradient"> Background gradient</label>
@@ -163,7 +183,7 @@
 &lt;link rel="manifest" href="/manifest.webmanifest"&gt;</code></pre>
       </div>
 
-      <div class="card">
+      <div class="card" data-show="mode=text">
         <div class="card-head"><h2>Font: <span id="specimen-name"></span></h2></div>
         <div id="specimen" class="specimen"></div>
         <p class="note">Glyphs are hand-drawn centre-lines converted to plain path data, so icons look identical everywhere and need no font files.</p>
